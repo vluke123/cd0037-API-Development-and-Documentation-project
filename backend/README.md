@@ -30,6 +30,14 @@ With Postgres running, create a `trivia` database:
 createbd trivia
 ```
 
+To login via Windows you'll need to execute the psql.exe application via the cmd line:
+
+```powershell
+C:\"Program Files"\PostgreSQL\14\bin\psql.exe -d postgres -U postgres
+```
+
+You'll also need to add the bin files as a system variable within the Windows Environment to execute commands from the cmd line.
+
 Populate the database using the `trivia.psql` file provided. From the `backend` folder in terminal run:
 
 ```bash
@@ -39,6 +47,12 @@ psql trivia < trivia.psql
 ### Run the Server
 
 From within the `./src` directory first ensure you are working using your created virtual environment.
+
+You also need to start the postgresql server itself:
+
+```powershell
+C:\"Program Files"\PostgreSQL\14\bin\pg_ctl.exe -D "C:\Program Files\PostgreSQL\14\data" start
+```
 
 To run the server, execute:
 

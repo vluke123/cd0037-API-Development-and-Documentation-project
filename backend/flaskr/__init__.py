@@ -1,4 +1,6 @@
 import os
+from sre_parse import CATEGORIES
+from unicodedata import category
 from flask import Flask, request, abort, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_cors import CORS
@@ -16,15 +18,41 @@ def create_app(test_config=None):
     """
     @TODO: Set up CORS. Allow '*' for origins. Delete the sample route after completing the TODOs
     """
+    
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+    
+    def paginate_questions(request, selection):
+        page = request.args.get('page', 1, type=int)
+        start =  (page - 1) * QUESTIONS_PER_PAGE
+        end = start + QUESTIONS_PER_PAGE
 
-    """
-    @TODO: Use the after_request decorator to set Access-Control-Allow
-    """
+        questions = [question.format() for question in selection]
+        current_questions = questions[start:end]
+
+        return current_questions
+
+    # CORS Headers 
+    @app.after_request
+    def after_request(response):
+        response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization, true')
+        response.headers.add('Access-Control-Allow-Methods', 'GET, PATCH, POST, DELETE, OPTIONS')
+        return response
 
     """
     @TODO:
     Create an endpoint to handle GET requests
     for all available categories.
+    """
+   
+    """
+    Expected end points are:
+
+    /questions GET and POST
+    /categories GET
+    /questions?page=${this.state.page} GET
+    /categories/${id}/questions GET
+    /questions/${id} DELETE
+    /quizzes POST
     """
 
 
@@ -40,7 +68,25 @@ def create_app(test_config=None):
     ten questions per page and pagination at the bottom of the screen for three pages.
     Clicking on the page numbers should update the questions.
     """
+    @app.route('/questions', methods=["GET"])
+    def get_questions():
+        selection = Question.query.order_by(Question.id).all()
+        current_questions = paginate_questions(request, selection)
+        current_category = Question.category
+        categories_selection = Category.query.all()
+        formatted_categories = [category.format() for category in categories_selection]
 
+        if len(current_questions) == 0:
+            abort(404)
+
+        return jsonify({
+            'success': True,
+            'questions': current_questions,
+            'total_questions': len(Question.query.all()),
+            #'current_category': current_category
+            'categories': formatted_categories
+        })
+    
     """
     @TODO:
     Create an endpoint to DELETE question using a question ID.
@@ -92,11 +138,37 @@ def create_app(test_config=None):
     and shown whether they were correct or not.
     """
 
-    """
-    @TODO:
-    Create error handlers for all expected errors
-    including 404 and 422.
-    """
+    @app.errorhandler(404)
+    def not_found(error):
+        return jsonify({
+            "success": False, 
+            "error": 404,
+            "message": "Your requested resource was not found"
+        }), 404
+
+    @app.errorhandler(422)
+    def unprocessable(error):
+        return jsonify({
+            "success": False,
+            "error": 422,
+            "message": "Your request was not processable"
+        }), 422
+
+    @app.errorhandler(400)
+    def bad_request(error):
+        return jsonify({
+            "success": False,
+            "error": 400,
+            "message": "Server cannot or will not process the request due to client-side error"
+        }), 400
+
+    @app.errorhandler(500)
+    def internal_server_error(error):
+        return jsonify({
+            "success": False,
+            "error": 500,
+            "message": "Internal server error experienced"
+        }), 500
 
     return app
 
