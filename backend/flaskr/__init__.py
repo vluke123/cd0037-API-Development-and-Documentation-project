@@ -72,7 +72,6 @@ def create_app(test_config=None):
     def get_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
-        current_category = Question.category
         categories_selection = Category.query.all()
         formatted_categories = [category.format() for category in categories_selection]
 
@@ -83,7 +82,6 @@ def create_app(test_config=None):
             'success': True,
             'questions': current_questions,
             'total_questions': len(Question.query.all()),
-            #'current_category': current_category,
             'categories': formatted_categories
         })
     
@@ -115,16 +113,36 @@ def create_app(test_config=None):
         except:
             abort(404)
 
-    """
-    @TODO:
-    Create an endpoint to POST a new question,
-    which will require the question and answer text,
-    category, and difficulty score.
+    @app.route('/questions', methods=['POST'])
+    def post_question():
+        body = request.get_json()
 
-    TEST: When you submit a question on the "Add" tab,
-    the form will clear and the question will appear at the end of the last page
-    of the questions list in the "List" tab.
-    """
+        new_question = body.get('question', None) 
+        new_category = body.get('category', None)
+        new_answer = body.get('answer', None)
+        new_difficulty = body.get('difficulty', None)
+
+        try:
+            new_insert = Question(
+                question = new_question,
+                category = new_category,
+                difficulty = new_difficulty,
+                answer = new_answer
+            )
+            new_insert.insert()
+
+            selection = Question.query.order_by(Question.id).all()
+            current_questions = paginate_questions(request, selection)
+
+            return jsonify({
+            'success': True,
+            'inserted question': new_insert.id,
+            'questions': current_questions,
+            'total_questions': len(Question.query.all())
+            })
+
+        except:
+            abort(422)
 
     """
     @TODO:
