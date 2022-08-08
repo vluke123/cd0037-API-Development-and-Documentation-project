@@ -49,16 +49,17 @@ class TriviaTestCase(unittest.TestCase):
         self.assertEqual(data['success'], True)
         self.assertTrue(data['total_questions'])
         self.assertTrue(len(data['questions']))
+
+    def test_get_questions_by_category(self):
+        res = self.client().get('/categories/2/questions')
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(len(data['questions']))
         
     def test_404_error_invalid_page(self):
         res = self.client().get('/hahahahhaha_please_work')
-        data = json.loads(res.data)
-
-        self.assertEqual(res.status_code, 404)
-        self.assertEqual(data['success'], False)
-
-    def test_if_category_does_not_exist(self):
-        res = self.client().get('/categories/9999999')
         data = json.loads(res.data)
 
         self.assertEqual(res.status_code, 404)
