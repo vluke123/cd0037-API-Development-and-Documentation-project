@@ -31,6 +31,14 @@ class TriviaTestCase(unittest.TestCase):
             'difficulty': 10,
             'category': 2
         }
+
+        self.search_term = {
+            "search": "movie"
+        }
+
+        self.fake_search_term = {
+            "search": "asdhgtaq8732823ntr103gfnq0jfa0w"
+        }
     
     def tearDown(self):
         """Executed after reach test"""
@@ -84,6 +92,20 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
+
+    def test_search_term(self):
+        res = self.client().post('/questions', json=self.search_term)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+    
+    def test_search_term_error(self):
+        res = self.client().post('/questions', json=self.search_term)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 404)
+        self.assertEqual(data['success'], False)
         
 
 # Make the tests conveniently executable
