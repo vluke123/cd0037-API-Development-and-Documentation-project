@@ -37,7 +37,20 @@ class TriviaTestCase(unittest.TestCase):
         }
 
         self.fake_search_term = {
-            "search": "asdhgtaq8732823ntr103gfnq0jfa0w"
+            "what the hell": "asdhgtaq8732823ntr103gfnq0jfa0w"
+        }
+
+        self.fake_new_question = {
+            "ahahahahaha": "pls pls pls pls plspl asdg" 
+        }
+
+        self.empty_search_term = {
+            "search": "jajwetgj13518"
+        }
+
+        self.quiz_post = {
+            'previous_questions': [20],
+            'category': 1    
         }
     
     def tearDown(self):
@@ -93,6 +106,14 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
+        self.assertTrue(data['inserted question'])
+
+    def test_error_new_question(self):
+        res = self.client().post('/questions', json=self.fake_new_question)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
+        self.assertEqual(data['success'], False)
 
     def test_search_term(self):
         res = self.client().post('/questions', json=self.search_term)
@@ -100,15 +121,33 @@ class TriviaTestCase(unittest.TestCase):
 
         self.assertEqual(res.status_code, 200)
         self.assertEqual(data['success'], True)
-    
-    def test_search_term_error(self):
-        res = self.client().post('/questions', json=self.search_term)
+
+    def test_empty_seach_term_response(self):
+        res = self.client().post('/questions', json=self.empty_search_term)
         data = json.loads(res.data)
 
-        self.assertEqual(res.status_code, 404)
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertEqual(data['questions'],
+        'No questions found with search term'
+        )
+    
+    def test_search_term_error(self):
+        res = self.client().post('/questions', json=self.fake_search_term)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 422)
         self.assertEqual(data['success'], False)
+
+    def test_play_quiz(self):
+        res = self.client().post('/quizzes', json=self.quiz_post)
+        data = json.loads(res.data)
+
+        self.assertEqual(res.status_code, 200)
+        self.assertEqual(data['success'], True)
+        self.assertTrue(data['question'])
         
 
 # Make the tests conveniently executable
 if __name__ == "__main__":
-    unittest.main(verbosity=2)
+    unittest.main(verbosity=5)

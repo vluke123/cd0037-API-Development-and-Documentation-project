@@ -40,24 +40,6 @@ def create_app(test_config=None):
 
     """
     @TODO:
-    Create an endpoint to handle GET requests
-    for all available categories.
-    """
-   
-    """
-    Expected end points are:
-
-    /questions GET and POST
-    /categories GET
-    /questions?page=${this.state.page} GET
-    /categories/${id}/questions GET
-    /questions/${id} DELETE
-    /quizzes POST
-    """
-
-
-    """
-    @TODO:
     Create an endpoint to handle GET requests for questions,
     including pagination (every 10 questions).
     This endpoint should return a list of questions,
@@ -85,13 +67,6 @@ def create_app(test_config=None):
             'categories': formatted_categories
         })
     
-    """
-    @TODO:
-    Create an endpoint to DELETE question using a question ID.
-
-    TEST: When you click the trash icon next to a question, the question will be removed.
-    This removal will persist in the database and when you refresh the page.
-    """
     @app.route('/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
@@ -121,39 +96,51 @@ def create_app(test_config=None):
         new_category = body.get('category', None)
         new_answer = body.get('answer', None)
         new_difficulty = body.get('difficulty', None)
+        search = body.get('search', None)
 
-        try:
-            new_insert = Question(
-                question = new_question,
-                category = new_category,
-                difficulty = new_difficulty,
-                answer = new_answer
-            )
-            new_insert.insert()
+        try:    
+            if search:
+                selection = Question.query.order_by(Question.id).filter(
+                Question.question.ilike("%{}%".format(search))
+                )
 
-            selection = Question.query.order_by(Question.id).all()
-            current_questions = paginate_questions(request, selection)
+                current_questions = paginate_questions(request, selection)
+                if current_questions:
+                    return jsonify({
+                        'success': True,
+                        'questions': current_questions,
+                        'total_questions': len(Question.query.all()),
+                        })
+                else:
+                    return jsonify({
+                        'success': True,
+                        'questions': 'No questions found with search term',
+                        })
+                    
+            if new_question:
+                new_insert = Question(
+                    question = new_question,
+                    category = new_category,
+                    difficulty = new_difficulty,
+                    answer = new_answer
+                )
+                new_insert.insert()
 
-            return jsonify({
-            'success': True,
-            'inserted question': new_insert.id,
-            'questions': current_questions,
-            'total_questions': len(Question.query.all())
-            })
+                selection = Question.query.order_by(Question.id).all()
+                current_questions = paginate_questions(request, selection)
+
+                return jsonify({
+                'success': True,
+                'inserted question': new_insert.id,
+                'questions': current_questions,
+                'total_questions': len(Question.query.all())
+                })
+
+            else:
+                abort()
 
         except:
             abort(422)
-
-    """
-    @TODO:
-    Create a POST endpoint to get questions based on a search term.
-    It should return any questions for whom the search term
-    is a substring of the question.
-
-    TEST: Search by any phrase. The questions list will update to include
-    only question that include that string within their question.
-    Try using the word "title" to start.
-    """
 
     @app.route('/categories', methods=['GET'])
     def get_category():
@@ -194,7 +181,44 @@ def create_app(test_config=None):
     one question at a time is displayed, the user is allowed to answer
     and shown whether they were correct or not.
     """
+    @app.route('/quizzes', methods=['POST'])
+    def play_quiz():
+        body = request.get_json(force=True)
 
+        previous_questions = body.get('previous_questions', None)
+        quiz_category = body.get('category', None)
+
+        try:
+            if quiz_category:
+                selection = Question.query.filter(Question.category == quiz_category)
+                questions_formatted = [question.format() for question in selection]
+                quiz_question = random.choice(questions_formatted)
+
+                if previous_questions:
+                    while quiz_question['id'] in previous_questions:
+                        quiz_question = random.choice(questions_formatted)
+
+                return jsonify({
+                'success': True,
+                'question': quiz_question,
+                })
+
+            selection = Question.query.order_by(Question.id).all()
+            questions_formatted = [question.format() for question in selection]
+            quiz_question = random.choice(questions_formatted)
+
+            if previous_questions:
+                while quiz_question['id'] in previous_questions:
+                    quiz_question = random.choice(questions_formatted)
+
+            return jsonify({
+                'success': True,
+                'question': quiz_question
+                })
+
+        except:
+            abort(400)
+        
     @app.errorhandler(404)
     def not_found(error):
         return jsonify({
