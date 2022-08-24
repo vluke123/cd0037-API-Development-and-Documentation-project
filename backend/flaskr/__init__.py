@@ -30,16 +30,19 @@ def create_app(test_config=None):
     # CORS Headers 
     @app.after_request
     def after_request(response):
+        response.headers.add('Access-Control-Allow-Origin', '*')
         response.headers.add('Access-Control-Allow-Headers', 'Content-Type,Authorization, true')
         response.headers.add('Access-Control-Allow-Methods', 'GET, PATCH, POST, DELETE, OPTIONS')
         return response
 
 
-    @app.route('/questions', methods=["GET"])
+    @app.route('/api/v1/questions', methods=["GET"])
     def get_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
         categories_selection = Category.query.all()
+        current_question = Question.query.first()
+        current_category = current_question.category
         formatted_categories = [category.format() for category in categories_selection]
 
         if len(current_questions) == 0:
@@ -49,7 +52,8 @@ def create_app(test_config=None):
             'success': True,
             'questions': current_questions,
             'total_questions': len(Question.query.all()),
-            'categories': formatted_categories
+            'categories': formatted_categories,
+            'current_category': current_category
         })
     
 
@@ -72,7 +76,7 @@ def create_app(test_config=None):
             })
         
         except:
-            abort(404)
+            abort(422)
 
 
     @app.route('/questions', methods=['POST'])
