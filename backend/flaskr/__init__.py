@@ -40,24 +40,22 @@ def create_app(test_config=None):
     def get_questions():
         selection = Question.query.order_by(Question.id).all()
         current_questions = paginate_questions(request, selection)
-        categories_selection = Category.query.all()
-        current_question = Question.query.first()
-        current_category = current_question.category
-        formatted_categories = [category.format() for category in categories_selection]
+        categories = Category.query.order_by(Category.type).all()
+        formatted_categories = {category.id: category.type for category in categories}
 
         if len(current_questions) == 0:
             abort(404)
 
         return jsonify({
-            'success': True,
-            'questions': current_questions,
-            'total_questions': len(Question.query.all()),
-            'categories': formatted_categories,
-            'current_category': current_category
+            "success": True,
+            "questions": current_questions,
+            "total_questions": len(Question.query.all()),
+            "categories": formatted_categories,
+            "current_category": None
         })
     
 
-    @app.route('/questions/<int:question_id>', methods=['DELETE'])
+    @app.route('/api/v1/questions/<int:question_id>', methods=['DELETE'])
     def delete_question(question_id):
         try:
             question = Question.query.filter(Question.id == question_id).one_or_none()
@@ -79,7 +77,7 @@ def create_app(test_config=None):
             abort(422)
 
 
-    @app.route('/questions', methods=['POST'])
+    @app.route('/api/v1/questions', methods=['POST'])
     def post_question():
         body = request.get_json()
 
@@ -87,7 +85,7 @@ def create_app(test_config=None):
         new_category = body.get('category', None)
         new_answer = body.get('answer', None)
         new_difficulty = body.get('difficulty', None)
-        search = body.get('search', None)
+        search = body.get('searchTerm', None)
 
         try:    
             if search:
@@ -105,7 +103,8 @@ def create_app(test_config=None):
                 else:
                     return jsonify({
                         'success': True,
-                        'questions': 'No questions found with search term',
+                        'questions': current_questions,
+                        'total_questions': len(Question.query.all()),
                         })
                     
             if new_question:
@@ -134,10 +133,10 @@ def create_app(test_config=None):
             abort(422)
 
 
-    @app.route('/categories', methods=['GET'])
+    @app.route('/api/v1//categories', methods=['GET'])
     def get_category():
-        categories_selection = Category.query.all()
-        formatted_categories = [category.format() for category in categories_selection]
+        categories = Category.query.order_by(Category.type).all()
+        formatted_categories = {category.id: category.type for category in categories}
 
         return jsonify({
             'success': True,
@@ -145,7 +144,7 @@ def create_app(test_config=None):
             })
 
 
-    @app.route('/categories/<int:category_id>/questions', methods=['GET'])
+    @app.route('/api/v1//categories/<int:category_id>/questions', methods=['GET'])
     def question_based_on_category(category_id):
         try:
             questions = Question.query.filter(Question.category == category_id)
@@ -164,7 +163,7 @@ def create_app(test_config=None):
             abort(404)
 
 
-    @app.route('/quizzes', methods=['POST'])
+    @app.route('/api/v1//quizzes', methods=['POST'])
     def play_quiz():
         body = request.get_json(force=True)
 
