@@ -1,7 +1,7 @@
 # API Documentation
 
 ## Introduction
-This is project is a quiz API. It's a simple API that allows you to select questions from a list of categories and produce quiz games. Users are able to add their own questions as well as delete plus play a quiz game of selected categories.
+This project is a quiz API. It's a simple API that allows you to select questions from a list of categories and produce quiz games. Users are able to add their own questions as well as delete plus play a quiz game of selected categories.
 
 ### Frontend
 
